@@ -1,0 +1,15 @@
+# Copy this to .dev.vars and fill in your values
+# These are used by wrangler dev for local development
+
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your-service-role-key
+CLERK_SECRET_KEY=sk_test_xxx
+CLERK_WEBHOOK_SECRET=whsec_xxx
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+STRIPE_CONNECT_CLIENT_ID=ca_xxx
+YOUTUBE_API_KEY=AIza_xxx
+FRONTEND_URL=http://localhost:5173
+GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=xxx
+GOOGLE_REDIRECT_URI=http://localhost:3001/api/youtube/callback

@@ -1,14 +1,9 @@
-import { config } from 'dotenv'
-config({ path: '../.env' })
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
-import { serve } from '@hono/node-server'
-import { readFile } from 'fs/promises'
-import { dirname, join } from 'path'
-import { fileURLToPath } from 'url'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
+import { setEnv } from './lib/env.js'
+import { TRACKER_JS } from './lib/tracker-content.js'
+import type { Bindings } from './types/env.js'
 
 // Routes
 import auth from './routes/auth.js'
@@ -25,12 +20,21 @@ import conversions from './routes/conversions.js'
 import freebieConversion from './routes/freebie-conversion.js'
 import users from './routes/users.js'
 
-const app = new Hono()
+const app = new Hono<{ Bindings: Bindings }>()
+
+// Set env for each request (makes env available to all route handlers)
+app.use('*', async (c, next) => {
+  setEnv(c.env)
+  await next()
+})
 
 // Middleware
 app.use('*', logger())
 app.use('/api/*', cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, c) => {
+    const frontendUrl = c.env?.FRONTEND_URL || process.env.FRONTEND_URL || 'http://localhost:5173'
+    return origin === frontendUrl ? origin : frontendUrl
+  },
   credentials: true,
 }))
 
@@ -58,23 +62,13 @@ app.route('/api/freebie-conversion', freebieConversion)
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
 // Serve tracker.js for custom landing page integration
-app.get('/tracker.js', async (c) => {
-  try {
-    const trackerPath = join(__dirname, 'public', 'tracker.js')
-    const content = await readFile(trackerPath, 'utf-8')
-    return c.text(content, 200, {
-      'Content-Type': 'application/javascript',
-      'Cache-Control': 'public, max-age=3600',
-      'Access-Control-Allow-Origin': '*',
-    })
-  } catch {
-    return c.text('// Tracker not found', 404, {
-      'Content-Type': 'application/javascript',
-    })
-  }
+app.get('/tracker.js', (c) => {
+  return c.text(TRACKER_JS, 200, {
+    'Content-Type': 'application/javascript',
+    'Cache-Control': 'public, max-age=3600',
+    'Access-Control-Allow-Origin': '*',
+  })
 })
 
-const port = parseInt(process.env.PORT || '3001')
-
-serve({ fetch: app.fetch, port })
-console.log(`Hono server running on http://localhost:${port}`)
+// Export for Cloudflare Workers
+export default app

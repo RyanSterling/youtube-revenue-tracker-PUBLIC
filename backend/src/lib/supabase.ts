@@ -1,10 +1,9 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { getEnv } from './env.js'
 
 export function createServiceClient(): SupabaseClient {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const env = getEnv()
+  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY)
 }
 
 // Helper to get or create user from clerk_id (fallback for local dev without webhooks)

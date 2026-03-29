@@ -1,8 +1,10 @@
 import { Hono } from 'hono'
 import { Webhook } from 'svix'
 import { createServiceClient } from '../lib/supabase.js'
+import { getEnv } from '../lib/env.js'
+import type { Bindings } from '../types/env.js'
 
-const app = new Hono()
+const app = new Hono<{ Bindings: Bindings }>()
 
 // Clerk webhook - syncs users to Supabase
 app.post('/webhook', async (c) => {
@@ -15,7 +17,8 @@ app.post('/webhook', async (c) => {
     return c.json({ error: 'Missing svix headers' }, 400)
   }
 
-  const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET!)
+  const env = getEnv()
+  const wh = new Webhook(env.CLERK_WEBHOOK_SECRET || process.env.CLERK_WEBHOOK_SECRET!)
 
   let evt: {
     type: string
